@@ -1653,7 +1653,7 @@ def run(
                 logger.info(f"Running sidechain populations prediction for {jobname}")
 
                 ###initialize af2chic
-                af2chi_config = af2sidechains_multi.get_config(struct_weight=struct_weight,n_struct_ensemble=n_struct_ensemble, use_gpu=use_gpu_relax, keep_unrelaxed=keep_unrelaxed) #sc
+                af2chi_config = af2sidechains_multi.get_config(struct_weight=struct_weight,n_struct_ensemble=n_struct_ensemble, use_gpu_relax=use_gpu_relax, keep_unrelaxed=keep_unrelaxed) #sc
                 af2chis = af2sidechains_multi.af2sidechain_pops(af2chi_config) #sc
 
                 fitted_pops_residues, prior_pops_residues={},{} #sc
