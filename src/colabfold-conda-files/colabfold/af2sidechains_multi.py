@@ -56,6 +56,7 @@ def get_config(
     path_chi_checks: str = None,
     struct_weight: float = 0.85,
     n_struct_ensemble=100,
+    keep_unrelaxed: bool = False
 ) -> ConfigDict:
     print(">>>>>>> structure_weight:", struct_weight)
     config = ConfigDict()
@@ -67,6 +68,7 @@ def get_config(
     config.thetas = np.geomspace(1, 10000, num=20)
     config.dihedral_angles = [5 + (10 * i) for i in range(36)]
     config.n_struct_ensemble = int(n_struct_ensemble)
+    config.keep_unrelaxed = keep_unrelaxed
     #config.pool_cpus = int(os.cpu_count() / 4)
     config.pool_cpus = max(os.cpu_count(), int(os.cpu_count() / 4))
 
@@ -684,7 +686,7 @@ class create_pdb_ensemble:
             print(f">>> Generating ensemble structure {ensemble} ...")
             production_pool.append(
                 self.ensemble_creation_iteration(
-                    sequence, aatype, r3_bb, angles, fitted_pops, jobname, ensemble
+                    sequence, aatype, r3_bb, angles, fitted_pops, jobname, ensemble, keep_unrelaxed=self.config.keep_unrelaxed
                 )
             )
             if production_pool[-1]:
@@ -704,6 +706,7 @@ class create_pdb_ensemble:
         fitted_pops: dict,
         jobname: str,
         ensemble: int,
+        keep_unrelaxed: bool = False
     ) -> bool:
         """Args:
         sequence: list of str, protein sequence
@@ -713,6 +716,7 @@ class create_pdb_ensemble:
         fitted_pops: dict, fitted chi populations
         jobname: str, jobname
         ensemble: int, ensemble number
+        keep_unrelaxed: bool, do not delete unrelaxed structure files
         """
 
         ## sample sidechains
@@ -755,9 +759,13 @@ class create_pdb_ensemble:
             )
         ).write_text(relaxed_pdb_lines)
 
-        os.remove(
-            self.result_dir.joinpath(jobname + f"_sidechain_ensemble_{ensemble}.pdb")
-        )
+        if keep_unrelaxed: #ak
+            unrelaxed_file = self.result_dir.joinpath(jobname + f"_sidechain_ensemble_unrelaxed_{ensemble}.pdb")
+            os.rename(self.result_dir.joinpath(jobname + f"_sidechain_ensemble_{ensemble}.pdb"), unrelaxed_file)
+            print(f"Retaining non-relaxed structure file user request {unrelaxed_file}")
+        else:
+            os.remove(self.result_dir.joinpath(jobname + f"_sidechain_ensemble_{ensemble}.pdb"))
+
 
         check_clashes = count_clashes(
             self.result_dir.joinpath(
