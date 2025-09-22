@@ -1297,6 +1297,7 @@ def run(
     no_save_distributions:bool = False, #sc
     struct_weight:float = 0.85, #sc
     n_struct_ensemble:int = 100, #sc
+    keep_unrelaxed: bool = False, #ak
     **kwargs
 ):
     # check what device is available
@@ -1652,7 +1653,7 @@ def run(
                 logger.info(f"Running sidechain populations prediction for {jobname}")
 
                 ###initialize af2chic
-                af2chi_config = af2sidechains_multi.get_config(struct_weight=struct_weight,n_struct_ensemble=n_struct_ensemble, use_gpu=use_gpu_relax) #sc
+                af2chi_config = af2sidechains_multi.get_config(struct_weight=struct_weight,n_struct_ensemble=n_struct_ensemble, use_gpu=use_gpu_relax, keep_unrelaxed=keep_unrelaxed) #sc
                 af2chis = af2sidechains_multi.af2sidechain_pops(af2chi_config) #sc
 
                 fitted_pops_residues, prior_pops_residues={},{} #sc
@@ -2133,6 +2134,11 @@ def main():
         help="number of structures to generate in the af2chi ensemble"
     )
 
+    af2chi_group.add_argument(
+        "--keep-unrelaxed-structures", ##ak
+        action='store_true',
+        help="Keep generated structures before AMBER relaxation. Will probably contain clashes!"
+    )
     args = parser.parse_args()
 
     if (args.custom_template_path is not None) and (args.pdb_hit_file is not None):
@@ -2226,6 +2232,7 @@ def main():
         no_reweight=args.no_reweight, ##sc
         struct_weight=args.struct_weight, ##sc
         n_struct_ensemble=args.n_struct_ensemble, ##sc
+        keep_unrelaxed=args.keep_unrelaxed_structures, ##ak
     )
 
 if __name__ == "__main__":
